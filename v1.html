@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谣谣的专属无条件服从卡</title>
+    <style>
+        :root {
+            --primary-pink: #ff758f;
+            --dark-pink: #c9184a;
+            --light-pink: #ffb3c1;
+            --bg-color: #fff0f3;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(255, 179, 193, 0.4) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(255, 143, 163, 0.4) 0px, transparent 50%);
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #444;
+            overflow-x: hidden;
+            padding-bottom: 50px;
+        }
+
+        /* 音乐控制 */
+        #music-control {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            font-size: 24px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(255, 117, 143, 0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #music-control:hover { transform: scale(1.1); }
+        .playing { animation: rotate 4s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* 标题区域 */
+        .header {
+            margin: 40px 0 20px;
+            text-align: center;
+            user-select: none;
+        }
+        h1 {
+            color: var(--dark-pink);
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 15px rgba(201, 24, 74, 0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        h1:active { transform: scale(0.98); }
+        .subtitle {
+            color: var(--primary-pink);
+            font-size: 1rem;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* 计数器 */
+        .counter {
+            font-size: 1.1rem;
+            color: var(--dark-pink);
+            margin-bottom: 40px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 8px 25px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            font-weight: bold;
+        }
+
+        /* 隐藏的控制台 (双击标题出现) */
+        .setup-section {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            gap: 15px;
+            align-items: center;
+            animation: slideDown 0.3s ease-out;
+        }
+        .setup-section.active { display: flex; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        input {
+            width: 60px;
+            padding: 8px;
+            border: 2px solid var(--light-pink);
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+            font-weight: bold;
+            color: var(--dark-pink);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary-pink), var(--dark-pink));
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(201, 24, 74, 0.3);
+            transition: all 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201, 24, 74, 0.4); }
+
+        /* 卡片网格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1050px;
+            padding: 0 20px;
+        }
+
+        /* 高级VIP卡片样式 */
+        .card {
+            position: relative;
+            height: 160px;
+            background: linear-gradient(135deg, #ffffff 0%, #fff5f7 100%);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 15px 35px rgba(255, 117, 143, 0.1),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* 镭射光泽反光效果 */
+        .card::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-20deg);
+            transition: 0.5s;
+        }
+
+        .card:hover:not(.used) {
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 20px 40px rgba(201, 24, 74, 0.15);
+        }
+        .card:hover:not(.used)::after { left: 200%; }
+
+        /* 侧边装饰条 */
+        .card-sidebar {
+            width: 40px;
+            background: linear-gradient(to bottom, var(--primary-pink), var(--dark-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+
+        .card-content {
+            flex: 1;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .card h2 { 
+            color: var(--dark-pink); 
+            font-size: 1.5rem; 
+            margin-bottom: 8px;
+        }
+
+        .card p { 
+            color: #777; 
+            font-size: 0.9rem; 
+            line-height: 1.5;
+        }
+
+        /* 核销后样式 */
+        .card.used {
+            filter: grayscale(0.8) opacity(0.8);
+            cursor: default;
+            transform: scale(0.98);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        /* 复古红色印章 */
+        .stamp {
+            display: none;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            width: 90px;
+            height: 90px;
+            border: 4px solid #c9184a;
+            border-radius: 50%;
+            color: #c9184a;
+            font-weight: 900;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 1.2rem;
+            z-index: 10;
+            pointer-events: none;
+            background: rgba(255,255,255,0.4);
+            backdrop-filter: blur(2px);
+            transform: translateY(-50%) rotate(-20deg);
+        }
+        
+        .stamp::before {
+            content: "RUMOR";
+            position: absolute;
+            top: 10px;
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+        }
+
+        .card.used .stamp {
+            display: flex;
+            animation: stamp-drop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes stamp-drop {
+            0% { transform: translateY(-50%) rotate(0deg) scale(3); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-50%) rotate(-20deg) scale(1); opacity: 0.9; }
+        }
+
+        /* 专属定制弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.show { display: flex; opacity: 1; }
+
+        .custom-modal {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(201, 24, 74, 0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 90%;
+            width: 380px;
+        }
+        .modal-overlay.show .custom-modal { transform: scale(1); }
+
+        .custom-modal .heart-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: heartbeat 1.5s infinite;
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .custom-modal h3 { color: var(--dark-pink); margin-bottom: 10px; font-size: 1.4rem; }
+        .custom-modal p { color: #666; margin-bottom: 25px; font-size: 0.95rem; line-height: 1.6; }
+        
+        .modal-btns { display: flex; gap: 15px; justify-content: center; }
+        .btn-cancel { background: #f1f2f6; color: #576574; box-shadow: none; }
+        .btn-cancel:hover { background: #dfe4ea; transform: translateY(0); box-shadow: none;}
+        .btn-confirm { flex: 1; }
+
+        /* 撒花粒子容器 */
+        #particles {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 1500;
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 20px;
+            animation: pop 1s ease-out forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: translate(0, 0) scale(0.5) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot)); opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; }
+            .card-grid { grid-template-columns: 1fr; gap: 20px; }
+            .custom-modal { padding: 25px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop>
+        <source src="http://music.163.com/song/media/outer/url?id=3330620554.mp3" type="audio/mpeg">
+    </audio>
+    <div id="music-control" onclick="toggleMusic()">🎵</div>
+
+    <div class="header">
+        <h1 ondblclick="toggleSetup()">💖 谣谣专属无条件服从卡 💖</h1>
+        <div class="subtitle">属于你的特权，随时兑换，绝不耍赖</div>
+    </div>
+
+    <div class="setup-section" id="setupSection">
+        <span>✨ 补充能量：</span>
+        <input type="number" id="cardAmount" value="5" min="1">
+        <button onclick="initCards()">重新发卡</button>
+    </div>
+
+    <div class="counter">
+        🎁 剩余特权惊喜：<span id="countDisplay">0</span> 张
+    </div>
+
+    <div id="cardGrid" class="card-grid"></div>
+
+    <div class="modal-overlay" id="customModal">
+        <div class="custom-modal">
+            <div class="heart-icon">💌</div>
+            <h3>仪式感时刻</h3>
+            <p>确定要对这张【无条件服从卡】进行核销吗？<br>盖章生效后，必须立刻执行哦！</p>
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal()">我再想想</button>
+                <button class="btn-confirm" onclick="confirmUse(event)">果断盖章</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="particles"></div>
+
+    <script>
+        const bgm = document.getElementById('bgm');
+        const musicBtn = document.getElementById('music-control');
+        const modal = document.getElementById('customModal');
+        let cards = [];
+        let currentActionIndex = null;
+
+        // 文案库：让每次生成的卡片稍微有点不一样，增加惊喜感
+        const cardQuotes = [
+            "凭此券可兑换任意要求一次",
+            "本卡拥有最高解释权，不得反驳",
+            "无论刮风下雨，随叫随到特权",
+            "清空小脾气，无条件哄开心",
+            "任性妄为许可证（单次有效）"
+        ];
+
+        window.onload = () => {
+            const saved = localStorage.getItem('love_cards_data_v2');
+            if (saved) {
+                cards = JSON.parse(saved);
+                render();
+            } else {
+                initCards(5); // 默认首次发5张
+            }
+        };
+
+        // 隐藏/显示控制台
+        function toggleSetup() {
+            const setup = document.getElementById('setupSection');
+            setup.classList.toggle('active');
+        }
+
+        // 初始化卡片
+        function initCards(amount = null) {
+            const num = amount || document.getElementById('cardAmount').value;
+            if (cards.length > 0 && !amount && !confirm("重新发放将清空所有历史记录，确定吗？")) return;
+            
+            cards = [];
+            for (let i = 0; i < num; i++) {
+                // 随机抽取一句文案
+                const randomQuote = cardQuotes[Math.floor(Math.random() * cardQuotes.length)];
+                cards.push({ id: Date.now() + i, used: false, quote: randomQuote });
+            }
+            saveAndRender();
+            
+            // 发卡后自动隐藏控制台
+            document.getElementById('setupSection').classList.remove('active');
+        }
+
+        // 唤起自定义弹窗
+        function triggerUse(index) {
+            if (cards[index].used) return;
+            currentActionIndex = index;
+            modal.classList.add('show');
+            
+            // 移动端震动反馈
+            if (window.navigator.vibrate) window.navigator.vibrate(50);
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            modal.classList.remove('show');
+            currentActionIndex = null;
+        }
+
+        // 确认核销
+        function confirmUse(e) {
+            if (currentActionIndex !== null) {
+                cards[currentActionIndex].used = true;
+                saveAndRender();
+                
+                // 播放音乐
+                if (bgm.paused) toggleMusic();
+                
+                // 触发撒花特效 (获取按钮中心坐标)
+                const rect = e.target.getBoundingClientRect();
+                createParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                
+                closeModal();
+            }
+        }
+
+        // 数据保存与渲染
+        function saveAndRender() {
+            localStorage.setItem('love_cards_data_v2', JSON.stringify(cards));
+            render();
+        }
+
+        function render() {
+            const grid = document.getElementById('cardGrid');
+            grid.innerHTML = '';
+            let activeCount = 0;
+
+            cards.forEach((card, index) => {
+                if (!card.used) activeCount++;
+                
+                const cardEl = document.createElement('div');
+                cardEl.className = `card ${card.used ? 'used' : ''}`;
+                cardEl.onclick = () => triggerUse(index);
+                
+                cardEl.innerHTML = `
+                    <div class="card-sidebar">VIP PASS</div>
+                    <div class="card-content">
+                        <h2>无条件服从卡</h2>
+                        <p>${card.used ? '此卡片已完成它的历史使命...' : (card.quote || '凭此券可兑换任意要求一次')}</p>
+                        <div class="stamp">已执行</div>
+                    </div>
+                `;
+                grid.appendChild(cardEl);
+            });
+
+            document.getElementById('countDisplay').innerText = activeCount;
+        }
+
+        // 音乐播放控制
+        function toggleMusic() {
+            if (bgm.paused) {
+                bgm.play();
+                musicBtn.classList.add('playing');
+            } else {
+                bgm.pause();
+                musicBtn.classList.remove('playing');
+            }
+        }
+
+        // 爱心撒花特效函数
+        function createParticles(x, y) {
+            const container = document.getElementById('particles');
+            const particleCount = 20; // 粒子数量
+            const emojis = ['💖', '✨', '🌹', '💕'];
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                // 设置初始位置
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+
+                // 随机飞散的距离和角度
+                const tx = (Math.random() - 0.5) * 300; // -150px 到 150px
+                const ty = (Math.random() - 0.5) * 300;
+                const rot = Math.random() * 360;
+
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                particle.style.setProperty('--rot', `${rot}deg`);
+
+                container.appendChild(particle);
+
+                // 动画结束后移除 DOM
+                setTimeout(() => {
+                    particle.remove();
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
